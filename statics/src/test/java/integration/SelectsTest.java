@@ -2,6 +2,7 @@ package integration;
 
 import com.codeborne.selenide.SelenideElement;
 import com.codeborne.selenide.ex.ElementNotFound;
+import com.codeborne.selenide.ex.InvalidStateException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
@@ -98,7 +99,7 @@ final class SelectsTest extends IntegrationTest {
   }
 
   @Test
-  void selectOptionByValue_errorMessage() {
+  void selectOptionByValue_optionNotFound() {
     assertThatThrownBy(() -> {
       SelenideElement select = $(By.xpath("//select[@name='domain']"));
       select.selectOptionByValue("wrong-value");
@@ -108,13 +109,14 @@ final class SelectsTest extends IntegrationTest {
   }
 
   @Test
-  void selectOptionByText_errorMessage() {
+  void selectOptionByText_optionNotFound() {
     assertThatThrownBy(() -> {
       SelenideElement select = $(By.xpath("//select[@name='domain']"));
       select.selectOption("wrong-text");
     })
       .isInstanceOf(ElementNotFound.class)
-      .hasMessageContaining("Element not found {By.xpath: //select[@name='domain']/option[text:wrong-text]}");
+      .hasMessageStartingWith("Element not found {By.xpath: //select[@name='domain']/option[text:wrong-text]}")
+      .hasMessageContaining("Expected: exist");
   }
 
   @Test
@@ -136,14 +138,6 @@ final class SelectsTest extends IntegrationTest {
     select.selectOption(3);
     assertThat(select.getSelectedText())
       .isEqualTo("@мыло.ру");
-  }
-
-  @Test()
-  void throwsElementNotFoundWithOptionsText() {
-    assertThatThrownBy(() -> $x("//select[@name='domain']").selectOption("unexisting-option"))
-      .isInstanceOf(ElementNotFound.class)
-      .hasMessageStartingWith(
-        String.format("Element not found {By.xpath: //select[@name='domain']/option[text:unexisting-option]}%nExpected: exist"));
   }
 
   @Test()
@@ -288,5 +282,89 @@ final class SelectsTest extends IntegrationTest {
 
     $(By.xpath("//select[@name='domain']")).selectOptionByValue("myrambler.ru");
     $("#selectedDomain").shouldHave(text("@myrambler.ru"));
+  }
+
+  @Test
+  void selectOptionByText_disabledSelect() {
+    assertThatThrownBy(() -> $("#disabled-select").selectOption("Anna"))
+      .isInstanceOf(InvalidStateException.class)
+      .hasMessageContaining("Invalid element state [#disabled-select]: Cannot select option in a disabled select");
+  }
+
+  @Test
+  void selectOptionByIndex_disabledSelect() {
+    assertThatThrownBy(() -> $("#disabled-select").selectOption(0))
+      .isInstanceOf(InvalidStateException.class)
+      .hasMessageContaining("Invalid element state [#disabled-select]: Cannot select option in a disabled select");
+  }
+
+  @Test
+  void selectOptionContainingText_notFound() {
+    assertThatThrownBy(() -> $("select#gender").selectOptionContainingText("ale", "emale", "third", "fourth"))
+      .isInstanceOf(ElementNotFound.class)
+      .hasMessageContaining("Element not found {select#gender/option[text containing:third]}");
+  }
+
+  @Test
+  void selectOptionContainingText_disabledSelect() {
+    assertThatThrownBy(() -> $("#disabled-select").selectOptionContainingText("Arnold"))
+      .isInstanceOf(InvalidStateException.class)
+      .hasMessageContaining("Invalid element state [#disabled-select]: Cannot select option in a disabled select");
+  }
+
+  @Test
+  void selectOptionByValue_disabledSelect() {
+    assertThatThrownBy(() -> $("#disabled-select").selectOptionByValue("mickey rourke"))
+      .isInstanceOf(InvalidStateException.class)
+      .hasMessageContaining("Invalid element state [#disabled-select]: Cannot select option in a disabled select");
+  }
+
+  @Test
+  void selectOptionByText_disabledOption() {
+    assertThatThrownBy(() -> $("#cars").selectOption("Zhiguli"))
+      .isInstanceOf(InvalidStateException.class)
+      .hasMessageContaining("Invalid element state [#cars/option[text:Zhiguli]]: Cannot select a disabled option");
+  }
+
+  @Test
+  void selectMultipleOptionsByText_disabledOption() {
+    assertThatThrownBy(() -> $("#cars").selectOption("Volvo", "Audi", "Zhiguli", "Saab"))
+      .isInstanceOf(InvalidStateException.class)
+      .hasMessageContaining("Invalid element state [#cars/option[text:Zhiguli]]: Cannot select a disabled option");
+  }
+
+  @Test
+  void selectOptionByIndex_disabledOption() {
+    assertThatThrownBy(() -> $("#cars").selectOption(4))
+      .isInstanceOf(InvalidStateException.class)
+      .hasMessageContaining("Invalid element state [#cars/option[index:4]]: Cannot select a disabled option");
+  }
+
+  @Test
+  void selectMultipleOptionsByIndex_disabledOption() {
+    assertThatThrownBy(() -> $("#cars").selectOption(1, 2, 4))
+      .isInstanceOf(InvalidStateException.class)
+      .hasMessageContaining("Invalid element state [#cars/option[index:4]]: Cannot select a disabled option");
+  }
+
+  @Test
+  void selectOptionContainingText_disabledOption() {
+    assertThatThrownBy(() -> $("#cars").selectOptionContainingText("higul"))
+      .isInstanceOf(InvalidStateException.class)
+      .hasMessageContaining("Invalid element state [#cars/option[text containing:higul]]: Cannot select a disabled option");
+  }
+
+  @Test
+  void selectOptionByValue_disabledOption() {
+    assertThatThrownBy(() -> $("#cars").selectOptionByValue("zhiguli"))
+      .isInstanceOf(InvalidStateException.class)
+      .hasMessageContaining("Invalid element state [#cars/option[value:zhiguli]]: Cannot select a disabled option");
+  }
+
+  @Test
+  void selectMultipleOptionsByValue_disabledOption() {
+    assertThatThrownBy(() -> $("#cars").selectOptionByValue("opel", "zhiguli", "audi"))
+      .isInstanceOf(InvalidStateException.class)
+      .hasMessageContaining("Invalid element state [#cars/option[value:zhiguli]]: Cannot select a disabled option");
   }
 }
