@@ -34,7 +34,7 @@ subprojects {
   task chrome_headless(type: Test) {
     systemProperties['selenide.browser'] = 'chrome'
     systemProperties['selenide.headless'] = 'true'
-    include 'integration/**/*'
+    include 'integration/**/*AlertTest*'
     exclude 'com/codeborne/selenide/**/*'
   }
 
